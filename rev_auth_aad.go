@@ -31,12 +31,14 @@ var (
 	aadAppClientId     string
 	aadAppClientSecret string
 
-	aadTenantId               = "organizations"
+	aadTenantId               = ""
 	aadTenantAuthority        = ""
 	aadCloudInstance          = "https://login.microsoftonline.com"
 	aadAccountPrimaryDomain   = "sanofi.com"
 	aadAppApiPublicScopes     = []string{"User.Read"}
 	aadAppApiCredentialScopes = []string{"https://graph.microsoft.com/.default"}
+
+	appLogoutRedirectUrl = "/login"
 )
 
 type AuthReply struct {
@@ -66,13 +68,14 @@ type QueryReply struct {
 // InitAAD reading AAD configuration
 func InitAAD() {
 	var found bool
-	if aadTenantId, found = revel.Config.String("aad.tenant.id"); found &&
-		aadTenantId == "" || strings.TrimSpace(aadTenantId) == "" {
+	if aadTenantId, found = revel.Config.String("aad.tenant.id"); !found {
+		panic("aad.tenant.id not defined in revel app.conf file")
+	} else if aadTenantId == "" || strings.TrimSpace(aadTenantId) == "" {
 		panic("aad.tenant.id cannot be empty before authentication")
 	}
 	if aadCloudInstance, found = revel.Config.String("aad.cloud.instance"); found &&
-		aadCloudInstance == "" || strings.TrimSpace(aadCloudInstance) == "" {
-		panic("aad.cloud.instance cannot be empty before fetch authentication token")
+		aadCloudInstance != "" && strings.TrimSpace(aadCloudInstance) != "" {
+		panic("aad.cloud.instance cannot be empty before authentication")
 	}
 	aadTenantAuthority = fmt.Sprintf("%s/%s", utils.TrimSuffix(aadCloudInstance, "/"), aadTenantId)
 	if aadAppClientId, found = revel.Config.String("aad.app.client.id"); !found {

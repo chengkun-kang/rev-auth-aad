@@ -1,9 +1,10 @@
 package controllers
 
 import (
+	"fmt"
 	"strings"
 
-	authaad "github.com/chengkun-kang/rev-auth-aad"
+	revauthaad "github.com/chengkun-kang/rev-auth-aad"
 	"github.com/chengkun-kang/rev-auth-aad/app/models"
 	mgodo "github.com/lujiacn/mgodo"
 	"github.com/revel/revel"
@@ -27,11 +28,14 @@ func (c *Auth) Authenticate(account, password string) revel.Result {
 		c.Flash.Error("Please fill in account and password")
 		return c.Redirect(c.Request.Referer())
 	}
-	authUser := authaad.Authenticate(account, password)
+
+	authUser := revauthaad.AuthenticatePublicClient(account, password)
+	currentUserIdentidy := strings.ToLower(authUser.Account)
 	if !authUser.IsAuthenticated {
 		//Save LoginLog
 		loginLog := new(models.LoginLog)
-		loginLog.Account = account
+		// loginLog.Account = account
+		loginLog.Account = currentUserIdentidy
 		loginLog.Status = "FAILURE"
 		loginLog.IPAddress = c.Request.RemoteAddr
 		mgodo.New(c.MgoSession, loginLog).Create()
@@ -42,16 +46,17 @@ func (c *Auth) Authenticate(account, password string) revel.Result {
 
 	// save login log
 	loginLog := new(models.LoginLog)
-	loginLog.Account = account
+	loginLog.Account = currentUserIdentidy
 	loginLog.Status = "SUCCESS"
 	loginLog.IPAddress = c.Request.RemoteAddr
 	mgodo.New(c.MgoSession, loginLog).Create()
 
-	c.Session["Identity"] = strings.ToLower(account)
+	c.Session["Identity"] = strings.ToLower(currentUserIdentidy)
 
 	//save current user information
 	currentUser := new(models.User)
-	currentUser.Identity = strings.ToLower(account)
+	currentUser.Identity = currentUserIdentidy
+	// currentUser.Identity = strings.ToLower(account)
 	currentUser.Mail = authUser.Email
 	currentUser.Avatar = authUser.Avatar
 	currentUser.Name = authUser.Name
@@ -81,8 +86,19 @@ func (c *Auth) Authenticate(account, password string) revel.Result {
 func (c *Auth) Logout() revel.Result {
 	//delete cache which is logged in user info
 	cache.Delete(c.Session.ID())
-
 	c.Session = make(map[string]interface{})
+	/**
+	 * Construct a logout URI and redirect the user to end the
+	 * session with Azure AD. For more information, visit:
+	 * https://docs.microsoft.com/azure/active-directory/develop/v2-protocols-oidc#send-a-sign-out-request
+	 */
+	if revauthaad.aadTenantAuthority == "" || strings.TrimSpace(revauthaad.aadTenantAuthority) == "" {
+		c.Flash.Error("No Azure AD tenant authority found, please contact with system administrator.")
+	}
+	if revauthaad.appLogoutRedirectUrl == "" || strings.TrimSpace(revauthaad.appLogoutRedirectUrl) == "" {
+		c.Flash.Error("No application logout redirect url found, please contact with system administrator.")
+	}
+	logoutUri := fmt.Sprintf("%s/oauth2/v2.0/logout?post_logout_redirect_uri=%s", revauthaad.aadTenantAuthority, revauthaad.appLogoutRedirectUrl)
 	c.Flash.Success("You have logged out.")
-	return c.Redirect("/")
+	return c.Redirect(logoutUri)
 }
