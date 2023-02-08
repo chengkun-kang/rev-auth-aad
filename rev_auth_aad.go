@@ -73,9 +73,13 @@ func InitAAD() {
 	} else if aadTenantId == "" || strings.TrimSpace(aadTenantId) == "" {
 		panic("aad.tenant.id cannot be empty before authentication")
 	}
-	if aadCloudInstance, found = revel.Config.String("aad.cloud.instance"); found &&
-		aadCloudInstance != "" && strings.TrimSpace(aadCloudInstance) != "" {
-		panic("aad.cloud.instance cannot be empty before authentication")
+	if tempCloudInstance, found := revel.Config.String("aad.cloud.instance"); found &&
+		tempCloudInstance != "" && strings.TrimSpace(tempCloudInstance) != "" {
+		aadCloudInstance = tempCloudInstance
+	}
+	if tempLogoutRedirectUrl, found := revel.Config.String("app.logout.redirect.url"); found &&
+		tempLogoutRedirectUrl != "" && strings.TrimSpace(tempLogoutRedirectUrl) != "" {
+		appLogoutRedirectUrl = tempLogoutRedirectUrl
 	}
 	aadTenantAuthority = fmt.Sprintf("%s/%s", utils.TrimSuffix(aadCloudInstance, "/"), aadTenantId)
 	if aadAppClientId, found = revel.Config.String("aad.app.client.id"); !found {
@@ -89,9 +93,7 @@ func InitAAD() {
 		panic("aad.app.client.secret cannot be empty before authentication")
 	}
 	if apiPublicScopesStr, found := revel.Config.String("aad.api.public.scopes"); found {
-		if apiPublicScopesStr == "" || strings.TrimSpace(apiPublicScopesStr) == "" {
-			panic("aad.api.public.scopes cannot be empty before fetch authentication token")
-		} else {
+		if apiPublicScopesStr != "" && strings.TrimSpace(apiPublicScopesStr) != "" {
 			aadAppApiPublicScopes = utils.RemoveBlankStrings(strings.Split(apiPublicScopesStr, ","))
 			if len(aadAppApiPublicScopes) == 0 {
 				panic("aad.api.public.scopes cannot be empty items before fetch authentication token")
@@ -100,9 +102,7 @@ func InitAAD() {
 	}
 
 	if apiCredentialScopesStr, found := revel.Config.String("aad.api.credential.scopes"); found {
-		if apiCredentialScopesStr == "" || strings.TrimSpace(apiCredentialScopesStr) == "" {
-			panic("aad.api.credential.scopes cannot be empty before fetch authentication token")
-		} else {
+		if apiCredentialScopesStr != "" && strings.TrimSpace(apiCredentialScopesStr) != "" {
 			aadAppApiCredentialScopes = utils.RemoveBlankStrings(strings.Split(apiCredentialScopesStr, ","))
 			if len(aadAppApiCredentialScopes) == 0 {
 				panic("aad.api.credential.scopes cannot be empty items before fetch authentication token")
