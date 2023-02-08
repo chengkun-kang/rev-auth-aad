@@ -294,7 +294,7 @@ func AuthenticateByClientCredentials(account string) *AuthReply {
 }
 
 func AcquirePublicToken(account, password string) (string, error) {
-	var cacheAccessor = &cache.TokenCache{"./cache/serialized_cache.json"}
+	var cacheAccessor = &cache.TokenCache{File: "./cache/serialized_cache.json"}
 
 	log.Println("Start to fetch access token from AAD by account and password...")
 	app, err := azauthlibgopublic.New(aadAppClientId, azauthlibgopublic.WithCache(cacheAccessor), azauthlibgopublic.WithAuthority(aadTenantAuthority))
@@ -340,7 +340,7 @@ func AcquirePublicToken(account, password string) (string, error) {
 }
 
 func AcquireCredentialToken() (string, error) {
-	var cacheAccessor = &utils.TokenCache{"./cache/serialized_cache.json"}
+	var cacheAccessor = &cache.TokenCache{File: "./cache/serialized_cache.json"}
 
 	cred, err := azauthlibgocred.NewCredFromSecret(aadAppClientSecret)
 	if err != nil {

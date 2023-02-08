@@ -10,11 +10,11 @@ import (
 )
 
 type TokenCache struct {
-	file string
+	File string
 }
 
 func (t *TokenCache) Replace(cache cache.Unmarshaler, key string) {
-	data, err := os.ReadFile(t.file)
+	data, err := os.ReadFile(t.File)
 	if err != nil {
 		log.Println(err)
 	}
@@ -29,7 +29,7 @@ func (t *TokenCache) Export(cache cache.Marshaler, key string) {
 	if err != nil {
 		log.Println(err)
 	}
-	err = os.WriteFile(t.file, data, 0600)
+	err = os.WriteFile(t.File, data, 0600)
 	if err != nil {
 		log.Println(err)
 	}
