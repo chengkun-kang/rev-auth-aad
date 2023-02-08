@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
@@ -33,8 +32,9 @@ var (
 
 	aadTenantId               = ""
 	aadTenantAuthority        = ""
+	aadAccountPrimaryDomain   = ""
 	aadCloudInstance          = "https://login.microsoftonline.com"
-	aadAccountPrimaryDomain   = "sanofi.com"
+	aadApiUsersPath           = "https://graph.microsoft.com/v1.0/users"
 	aadAppApiPublicScopes     = []string{"User.Read"}
 	aadAppApiCredentialScopes = []string{"https://graph.microsoft.com/.default"}
 
@@ -77,11 +77,19 @@ func InitAAD() {
 		tempCloudInstance != "" && strings.TrimSpace(tempCloudInstance) != "" {
 		aadCloudInstance = tempCloudInstance
 	}
+	aadTenantAuthority = fmt.Sprintf("%s/%s", utils.TrimSuffix(aadCloudInstance, "/"), aadTenantId)
 	if tempLogoutRedirectUrl, found := revel.Config.String("app.logout.redirect.url"); found &&
 		tempLogoutRedirectUrl != "" && strings.TrimSpace(tempLogoutRedirectUrl) != "" {
 		appLogoutRedirectUrl = tempLogoutRedirectUrl
 	}
-	aadTenantAuthority = fmt.Sprintf("%s/%s", utils.TrimSuffix(aadCloudInstance, "/"), aadTenantId)
+	if accountDomain, found := revel.Config.String("aad.account.primary.domain"); found &&
+		accountDomain != "" && strings.TrimSpace(accountDomain) != "" {
+		aadAccountPrimaryDomain = accountDomain
+	}
+	if tempAADApiUsersPath, found := revel.Config.String("aad.api.users.path"); found &&
+		tempAADApiUsersPath != "" && strings.TrimSpace(tempAADApiUsersPath) != "" {
+		aadApiUsersPath = tempAADApiUsersPath
+	}
 	if aadAppClientId, found = revel.Config.String("aad.app.client.id"); !found {
 		panic("aad.app.client.id not defined in revel app.conf file")
 	} else if aadAppClientId == "" || strings.TrimSpace(aadAppClientId) == "" {
@@ -120,11 +128,7 @@ func InitPublicClient(account, password string) (*msgraphsdk.GraphServiceClient,
 	tempAccount := account
 	isMail := utils.MAIL_REGEX.MatchString(tempAccount)
 	// construct the username to principal username
-	if !isMail {
-		if accountDomain, found := revel.Config.String("aad.account.primary.domain"); found &&
-			accountDomain != "" && strings.TrimSpace(accountDomain) != "" {
-			aadAccountPrimaryDomain = accountDomain
-		}
+	if !isMail && aadAccountPrimaryDomain != "" && strings.TrimSpace(aadAccountPrimaryDomain) != "" {
 		tempAccount = fmt.Sprintf(`%s@%s`, tempAccount, aadAccountPrimaryDomain)
 	}
 
@@ -232,11 +236,7 @@ func AuthenticateByClientCredentials(account string) *AuthReply {
 	tempAccount := account
 	isMail := utils.MAIL_REGEX.MatchString(tempAccount)
 	// construct the username to principal username
-	if !isMail {
-		if accountDomain, found := revel.Config.String("aad.account.primary.domain"); found &&
-			accountDomain != "" && strings.TrimSpace(accountDomain) != "" {
-			aadAccountPrimaryDomain = accountDomain
-		}
+	if !isMail && aadAccountPrimaryDomain != "" && strings.TrimSpace(aadAccountPrimaryDomain) != "" {
 		tempAccount = fmt.Sprintf(`%s@%s`, tempAccount, aadAccountPrimaryDomain)
 	}
 
@@ -567,7 +567,7 @@ func QueryUserPhotoById(userId, token string) string {
 	headers := map[string]string{
 		"Authorization": fmt.Sprintf("Bearer %s", token),
 	}
-	queryUrl := fmt.Sprintf("https://graph.microsoft.com/v1.0/users/%s/photo/$value", userId)
+	queryUrl := utils.TrimSuffix(aadApiUsersPath, "/") + fmt.Sprintf("/%s/photo/$value", userId)
 	data, err := httpclient.GetJson(queryUrl, "", headers)
 	if err != nil {
 		log.Printf("Query user photo failed with error: %v", err)
@@ -585,18 +585,14 @@ func QueryUserPhotoByName(username, token string) string {
 
 	principalName := username
 	isMail := utils.MAIL_REGEX.MatchString(username)
-	if !isMail {
-		accountDomain, found := os.LookupEnv("AAD_TENANT_PRIMARY_DOMAIN")
-		if !found {
-			accountDomain = "sanofi.com"
-		}
-		principalName = fmt.Sprintf(`%s@%s`, principalName, accountDomain)
+	if !isMail && aadAccountPrimaryDomain != "" && strings.TrimSpace(aadAccountPrimaryDomain) != "" {
+		principalName = fmt.Sprintf(`%s@%s`, principalName, aadAccountPrimaryDomain)
 	}
 
 	headers := map[string]string{
 		"Authorization": fmt.Sprintf("Bearer %s", token),
 	}
-	queryUrl := fmt.Sprintf("https://graph.microsoft.com/v1.0/users/%s/photo/$value", username)
+	queryUrl := utils.TrimSuffix(aadApiUsersPath, "/") + fmt.Sprintf("/%s/photo/$value", username)
 	data, err := httpclient.GetJson(queryUrl, "", headers)
 	if err != nil {
 		log.Printf("Query user photo failed with error: %v", err)
