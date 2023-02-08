@@ -27,18 +27,18 @@ import (
 )
 
 var (
-	aadAppClientId     string
-	aadAppClientSecret string
+	AzureADAppClientId     string
+	AzureADAppClientSecret string
 
-	aadTenantId               = ""
-	aadTenantAuthority        = ""
-	aadAccountPrimaryDomain   = ""
-	aadCloudInstance          = "https://login.microsoftonline.com"
-	aadApiUsersPath           = "https://graph.microsoft.com/v1.0/users"
-	aadAppApiPublicScopes     = []string{"User.Read"}
-	aadAppApiCredentialScopes = []string{"https://graph.microsoft.com/.default"}
+	AzureADTenantId             = ""
+	AzureADTenantAuthority      = ""
+	AzureADAccountPrimaryDomain = ""
+	AzureADCloudInstance        = "https://login.microsoftonline.com"
+	AzureADApiUsersPath         = "https://graph.microsoft.com/v1.0/users"
+	AzureADApiPublicScopes      = []string{"User.Read"}
+	AzureADApiCredentialScopes  = []string{"https://graph.microsoft.com/.default"}
 
-	appLogoutRedirectUrl = "/login"
+	AppLogoutRedirectUrl = "/login"
 )
 
 type AuthReply struct {
@@ -68,42 +68,42 @@ type QueryReply struct {
 // InitAAD reading AAD configuration
 func InitAAD() {
 	var found bool
-	if aadTenantId, found = revel.Config.String("aad.tenant.id"); !found {
+	if AzureADTenantId, found = revel.Config.String("aad.tenant.id"); !found {
 		panic("aad.tenant.id not defined in revel app.conf file")
-	} else if aadTenantId == "" || strings.TrimSpace(aadTenantId) == "" {
+	} else if AzureADTenantId == "" || strings.TrimSpace(AzureADTenantId) == "" {
 		panic("aad.tenant.id cannot be empty before authentication")
 	}
 	if tempCloudInstance, found := revel.Config.String("aad.cloud.instance"); found &&
 		tempCloudInstance != "" && strings.TrimSpace(tempCloudInstance) != "" {
-		aadCloudInstance = tempCloudInstance
+		AzureADCloudInstance = tempCloudInstance
 	}
-	aadTenantAuthority = fmt.Sprintf("%s/%s", utils.TrimSuffix(aadCloudInstance, "/"), aadTenantId)
+	AzureADTenantAuthority = fmt.Sprintf("%s/%s", utils.TrimSuffix(AzureADCloudInstance, "/"), AzureADTenantId)
 	if tempLogoutRedirectUrl, found := revel.Config.String("app.logout.redirect.url"); found &&
 		tempLogoutRedirectUrl != "" && strings.TrimSpace(tempLogoutRedirectUrl) != "" {
-		appLogoutRedirectUrl = tempLogoutRedirectUrl
+		AppLogoutRedirectUrl = tempLogoutRedirectUrl
 	}
 	if accountDomain, found := revel.Config.String("aad.account.primary.domain"); found &&
 		accountDomain != "" && strings.TrimSpace(accountDomain) != "" {
-		aadAccountPrimaryDomain = accountDomain
+		AzureADAccountPrimaryDomain = accountDomain
 	}
 	if tempAADApiUsersPath, found := revel.Config.String("aad.api.users.path"); found &&
 		tempAADApiUsersPath != "" && strings.TrimSpace(tempAADApiUsersPath) != "" {
-		aadApiUsersPath = tempAADApiUsersPath
+		AzureADApiUsersPath = tempAADApiUsersPath
 	}
-	if aadAppClientId, found = revel.Config.String("aad.app.client.id"); !found {
+	if AzureADAppClientId, found = revel.Config.String("aad.app.client.id"); !found {
 		panic("aad.app.client.id not defined in revel app.conf file")
-	} else if aadAppClientId == "" || strings.TrimSpace(aadAppClientId) == "" {
+	} else if AzureADAppClientId == "" || strings.TrimSpace(AzureADAppClientId) == "" {
 		panic("aad.app.client.id cannot be empty before authentication")
 	}
-	if aadAppClientSecret, found = revel.Config.String("aad.app.client.secret"); !found {
+	if AzureADAppClientSecret, found = revel.Config.String("aad.app.client.secret"); !found {
 		panic("aad.app.client.secret not defined in revel app.conf file")
-	} else if aadAppClientSecret == "" || strings.TrimSpace(aadAppClientSecret) == "" {
+	} else if AzureADAppClientSecret == "" || strings.TrimSpace(AzureADAppClientSecret) == "" {
 		panic("aad.app.client.secret cannot be empty before authentication")
 	}
 	if apiPublicScopesStr, found := revel.Config.String("aad.api.public.scopes"); found {
 		if apiPublicScopesStr != "" && strings.TrimSpace(apiPublicScopesStr) != "" {
-			aadAppApiPublicScopes = utils.RemoveBlankStrings(strings.Split(apiPublicScopesStr, ","))
-			if len(aadAppApiPublicScopes) == 0 {
+			AzureADApiPublicScopes = utils.RemoveBlankStrings(strings.Split(apiPublicScopesStr, ","))
+			if len(AzureADApiPublicScopes) == 0 {
 				panic("aad.api.public.scopes cannot be empty items before fetch authentication token")
 			}
 		}
@@ -111,8 +111,8 @@ func InitAAD() {
 
 	if apiCredentialScopesStr, found := revel.Config.String("aad.api.credential.scopes"); found {
 		if apiCredentialScopesStr != "" && strings.TrimSpace(apiCredentialScopesStr) != "" {
-			aadAppApiCredentialScopes = utils.RemoveBlankStrings(strings.Split(apiCredentialScopesStr, ","))
-			if len(aadAppApiCredentialScopes) == 0 {
+			AzureADApiCredentialScopes = utils.RemoveBlankStrings(strings.Split(apiCredentialScopesStr, ","))
+			if len(AzureADApiCredentialScopes) == 0 {
 				panic("aad.api.credential.scopes cannot be empty items before fetch authentication token")
 			}
 		}
@@ -128,14 +128,14 @@ func InitPublicClient(account, password string) (*msgraphsdk.GraphServiceClient,
 	tempAccount := account
 	isMail := utils.MAIL_REGEX.MatchString(tempAccount)
 	// construct the username to principal username
-	if !isMail && aadAccountPrimaryDomain != "" && strings.TrimSpace(aadAccountPrimaryDomain) != "" {
-		tempAccount = fmt.Sprintf(`%s@%s`, tempAccount, aadAccountPrimaryDomain)
+	if !isMail && AzureADAccountPrimaryDomain != "" && strings.TrimSpace(AzureADAccountPrimaryDomain) != "" {
+		tempAccount = fmt.Sprintf(`%s@%s`, tempAccount, AzureADAccountPrimaryDomain)
 	}
 
 	log.Printf("Start initializing Graph service client on %s\n", time.Now())
 	cred, err := azidentity.NewUsernamePasswordCredential(
-		aadTenantId,
-		aadAppClientId,
+		AzureADTenantId,
+		AzureADAppClientId,
 		account,
 		password,
 		nil,
@@ -145,7 +145,7 @@ func InitPublicClient(account, password string) (*msgraphsdk.GraphServiceClient,
 	}
 
 	log.Printf("Start to authenticate for user: %s...", tempAccount)
-	client, err := msgraphsdk.NewGraphServiceClientWithCredentials(cred, aadAppApiPublicScopes)
+	client, err := msgraphsdk.NewGraphServiceClientWithCredentials(cred, AzureADApiPublicScopes)
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("Failed to create graph client with credentials: %v", err))
 	}
@@ -155,16 +155,16 @@ func InitPublicClient(account, password string) (*msgraphsdk.GraphServiceClient,
 
 func InitCredentialClient() (*msgraphsdk.GraphServiceClient, error) {
 	cred, err := azidentity.NewClientSecretCredential(
-		aadTenantId,
-		aadAppClientId,
-		aadAppClientSecret,
+		AzureADTenantId,
+		AzureADAppClientId,
+		AzureADAppClientSecret,
 		nil,
 	)
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("Failed to create credentials: %v", err))
 	}
 
-	client, err := msgraphsdk.NewGraphServiceClientWithCredentials(cred, aadAppApiCredentialScopes)
+	client, err := msgraphsdk.NewGraphServiceClientWithCredentials(cred, AzureADApiCredentialScopes)
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("Failed to create client with client credentials: %v", err))
 	}
@@ -236,8 +236,8 @@ func AuthenticateByClientCredentials(account string) *AuthReply {
 	tempAccount := account
 	isMail := utils.MAIL_REGEX.MatchString(tempAccount)
 	// construct the username to principal username
-	if !isMail && aadAccountPrimaryDomain != "" && strings.TrimSpace(aadAccountPrimaryDomain) != "" {
-		tempAccount = fmt.Sprintf(`%s@%s`, tempAccount, aadAccountPrimaryDomain)
+	if !isMail && AzureADAccountPrimaryDomain != "" && strings.TrimSpace(AzureADAccountPrimaryDomain) != "" {
+		tempAccount = fmt.Sprintf(`%s@%s`, tempAccount, AzureADAccountPrimaryDomain)
 	}
 
 	msGraphClient, err := InitCredentialClient()
@@ -297,7 +297,7 @@ func AcquirePublicToken(account, password string) (string, error) {
 	var cacheAccessor = &cache.TokenCache{File: "./cache/serialized_cache.json"}
 
 	log.Println("Start to fetch access token from AAD by account and password...")
-	app, err := azauthlibgopublic.New(aadAppClientId, azauthlibgopublic.WithCache(cacheAccessor), azauthlibgopublic.WithAuthority(aadTenantAuthority))
+	app, err := azauthlibgopublic.New(AzureADAppClientId, azauthlibgopublic.WithCache(cacheAccessor), azauthlibgopublic.WithAuthority(AzureADTenantAuthority))
 	if err != nil {
 		return "", err
 	}
@@ -315,7 +315,7 @@ func AcquirePublicToken(account, password string) (string, error) {
 	//       cached or if something goes wrong (making the HTTP request, unmarshalling, etc).
 	result, err := app.AcquireTokenSilent(
 		context.Background(),
-		aadAppApiPublicScopes,
+		AzureADApiPublicScopes,
 		azauthlibgopublic.WithSilentAccount(userAccount),
 	)
 	if err != nil {
@@ -325,7 +325,7 @@ func AcquirePublicToken(account, password string) (string, error) {
 		// make a new request to AAD
 		result, err = app.AcquireTokenByUsernamePassword(
 			context.Background(),
-			aadAppApiPublicScopes,
+			AzureADApiPublicScopes,
 			account,
 			password,
 		)
@@ -342,19 +342,19 @@ func AcquirePublicToken(account, password string) (string, error) {
 func AcquireCredentialToken() (string, error) {
 	var cacheAccessor = &cache.TokenCache{File: "./cache/serialized_cache.json"}
 
-	cred, err := azauthlibgocred.NewCredFromSecret(aadAppClientSecret)
+	cred, err := azauthlibgocred.NewCredFromSecret(AzureADAppClientSecret)
 	if err != nil {
 		return "", err
 	}
 
 	log.Println("Start to fetch access token from AAD...")
-	client, err := azauthlibgocred.New(aadAppClientId, cred, azauthlibgocred.WithAuthority(aadTenantAuthority), azauthlibgocred.WithAccessor(cacheAccessor))
+	client, err := azauthlibgocred.New(AzureADAppClientId, cred, azauthlibgocred.WithAuthority(AzureADTenantAuthority), azauthlibgocred.WithAccessor(cacheAccessor))
 	if err != nil {
 		return "", err
 	}
-	result, err := client.AcquireTokenSilent(context.Background(), aadAppApiCredentialScopes)
+	result, err := client.AcquireTokenSilent(context.Background(), AzureADApiCredentialScopes)
 	if err != nil {
-		result, err = client.AcquireTokenByCredential(context.Background(), aadAppApiCredentialScopes)
+		result, err = client.AcquireTokenByCredential(context.Background(), AzureADApiCredentialScopes)
 		if err != nil {
 			return "", err
 		}
@@ -567,7 +567,7 @@ func QueryUserPhotoById(userId, token string) string {
 	headers := map[string]string{
 		"Authorization": fmt.Sprintf("Bearer %s", token),
 	}
-	queryUrl := utils.TrimSuffix(aadApiUsersPath, "/") + fmt.Sprintf("/%s/photo/$value", userId)
+	queryUrl := utils.TrimSuffix(AzureADApiUsersPath, "/") + fmt.Sprintf("/%s/photo/$value", userId)
 	data, err := httpclient.GetJson(queryUrl, "", headers)
 	if err != nil {
 		log.Printf("Query user photo failed with error: %v", err)
@@ -585,14 +585,14 @@ func QueryUserPhotoByName(username, token string) string {
 
 	principalName := username
 	isMail := utils.MAIL_REGEX.MatchString(username)
-	if !isMail && aadAccountPrimaryDomain != "" && strings.TrimSpace(aadAccountPrimaryDomain) != "" {
-		principalName = fmt.Sprintf(`%s@%s`, principalName, aadAccountPrimaryDomain)
+	if !isMail && AzureADAccountPrimaryDomain != "" && strings.TrimSpace(AzureADAccountPrimaryDomain) != "" {
+		principalName = fmt.Sprintf(`%s@%s`, principalName, AzureADAccountPrimaryDomain)
 	}
 
 	headers := map[string]string{
 		"Authorization": fmt.Sprintf("Bearer %s", token),
 	}
-	queryUrl := utils.TrimSuffix(aadApiUsersPath, "/") + fmt.Sprintf("/%s/photo/$value", username)
+	queryUrl := utils.TrimSuffix(AzureADApiUsersPath, "/") + fmt.Sprintf("/%s/photo/$value", username)
 	data, err := httpclient.GetJson(queryUrl, "", headers)
 	if err != nil {
 		log.Printf("Query user photo failed with error: %v", err)

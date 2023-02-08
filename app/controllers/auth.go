@@ -92,13 +92,13 @@ func (c *Auth) Logout() revel.Result {
 	 * session with Azure AD. For more information, visit:
 	 * https://docs.microsoft.com/azure/active-directory/develop/v2-protocols-oidc#send-a-sign-out-request
 	 */
-	if revauthaad.aadTenantAuthority == "" || strings.TrimSpace(revauthaad.aadTenantAuthority) == "" {
+	if revauthaad.AzureADTenantAuthority == "" || strings.TrimSpace(revauthaad.AzureADTenantAuthority) == "" {
 		c.Flash.Error("No Azure AD tenant authority found, please contact with system administrator.")
 	}
-	if revauthaad.appLogoutRedirectUrl == "" || strings.TrimSpace(revauthaad.appLogoutRedirectUrl) == "" {
+	if revauthaad.AppLogoutRedirectUrl == "" || strings.TrimSpace(revauthaad.AppLogoutRedirectUrl) == "" {
 		c.Flash.Error("No application logout redirect url found, please contact with system administrator.")
 	}
-	logoutUri := fmt.Sprintf("%s/oauth2/v2.0/logout?post_logout_redirect_uri=%s", revauthaad.aadTenantAuthority, revauthaad.appLogoutRedirectUrl)
+	logoutUri := fmt.Sprintf("%s/oauth2/v2.0/logout?post_logout_redirect_uri=%s", revauthaad.AzureADTenantAuthority, revauthaad.AppLogoutRedirectUrl)
 	c.Flash.Success("You have logged out.")
 	return c.Redirect(logoutUri)
 }
