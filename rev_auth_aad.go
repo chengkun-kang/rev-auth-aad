@@ -7,7 +7,8 @@ import (
 	"fmt"
 	"log"
 	"net/url"
-	"os"
+	"path"
+	"runtime"
 	"strings"
 	"time"
 
@@ -295,10 +296,8 @@ func AuthenticateByClientCredentials(account string) *AuthReply {
 }
 
 func AcquirePublicToken(account, password string) (string, error) {
-	curDir, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
+	_, filename, _, _ := runtime.Caller(0)
+	curDir := path.Dir(filename)
 	var cacheAccessor = &cache.TokenCache{File: curDir + "/cache/serialized_cache.json"}
 
 	log.Println("Start to fetch access token from AAD by account and password...")
@@ -345,10 +344,8 @@ func AcquirePublicToken(account, password string) (string, error) {
 }
 
 func AcquireCredentialToken() (string, error) {
-	curDir, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
+	_, filename, _, _ := runtime.Caller(0)
+	curDir := path.Dir(filename)
 	var cacheAccessor = &cache.TokenCache{File: curDir + "/cache/serialized_cache.json"}
 
 	cred, err := azauthlibgocred.NewCredFromSecret(AzureADAppClientSecret)
