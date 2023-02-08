@@ -28,9 +28,7 @@ aad.api.credential.scopes=xxxxxxxx-xxxxxxxx-xxxxxxxx-xxxxxxx   # default: https:
 app.logout.redirect.url=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx         # default: /login
 ```
 
-
-# Add application environments before start/during deployment
-The cloud instance (Instance) if you want your app to run in national clouds, for example. The different options include;
+The Azure AD Cloud Instance options include;
 ```
 https://login.microsoftonline.com/ for Azure public cloud
 https://login.microsoftonline.us/ for Azure US government
