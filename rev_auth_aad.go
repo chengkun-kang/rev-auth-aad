@@ -358,10 +358,10 @@ func AcquireCredentialToken() (string, error) {
 		if err != nil {
 			return "", err
 		}
-		fmt.Println("New acquired token with client credentials: " + result.AccessToken)
+		// fmt.Println("New acquired token with client credentials: " + result.AccessToken)
 		return result.AccessToken, nil
 	}
-	fmt.Println("New acquired silent token with client credentials: " + result.AccessToken)
+	// fmt.Println("New acquired silent token with client credentials: " + result.AccessToken)
 	return result.AccessToken, nil
 }
 
