@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net/url"
 	"path"
 	"runtime"
 	"strings"
@@ -166,6 +165,10 @@ func InitCredentialClient() (*msgraphsdk.GraphServiceClient, error) {
 		return nil, errors.New(fmt.Sprintf("Failed to create credentials: %v", err))
 	}
 
+	log.Println("Start to creating new Graph Service Client by client credentials")
+	log.Println(AzureADTenantId)
+	log.Println(AzureADAppClientId)
+	log.Println(AzureADAppClientSecret)
 	client, err := msgraphsdk.NewGraphServiceClientWithCredentials(cred, AzureADApiCredentialScopes)
 	if err != nil {
 		return nil, errors.New(fmt.Sprintf("Failed to create client with client credentials: %v", err))
@@ -382,7 +385,7 @@ func Query(userIdentity string) *QueryReply {
 	}
 
 	requestCount := true
-	requestFilter := url.QueryEscape(fmt.Sprintf("employeeId eq '%s'", userIdentity))
+	requestFilter := fmt.Sprintf("employeeId eq '%s'", userIdentity)
 	requestParameters := &msgraphsdkusers.UsersRequestBuilderGetQueryParameters{
 		Count:  &requestCount,
 		Filter: &requestFilter,
@@ -393,10 +396,11 @@ func Query(userIdentity string) *QueryReply {
 		QueryParameters: requestParameters,
 	}
 
-	log.Printf("Querying user info for: %s...", userIdentity)
+	log.Printf("Querying user info for: %s by Identity", userIdentity)
 	usersResponse, err := msGraphClient.Users().Get(context.Background(), configuration)
 	if err != nil {
-		return &QueryReply{Error: fmt.Sprintf("Querying user info for: %s failed with error: %v", userIdentity, err)}
+		log.Println(fmt.Sprintf("Querying user %s info by identity failed with error: %v", userIdentity, err))
+		return &QueryReply{Error: fmt.Sprintf("Querying user %s info by identity failed with error: %v", userIdentity, err)}
 	}
 
 	usersResponseValue := usersResponse.GetValue()
@@ -458,7 +462,7 @@ func QueryMail(emailAddress string) *QueryReply {
 	}
 
 	requestCount := true
-	requestFilter := url.QueryEscape(fmt.Sprintf("mail eq '%s'", emailAddress))
+	requestFilter := fmt.Sprintf("mail eq '%s'", emailAddress)
 	requestParameters := &msgraphsdkusers.UsersRequestBuilderGetQueryParameters{
 		Count:  &requestCount,
 		Filter: &requestFilter,
@@ -469,10 +473,11 @@ func QueryMail(emailAddress string) *QueryReply {
 		QueryParameters: requestParameters,
 	}
 
-	log.Printf("Querying user info for: %s...", emailAddress)
+	log.Printf("Querying user info for: %s by Email", emailAddress)
 	usersResponse, err := msGraphClient.Users().Get(context.Background(), configuration)
 	if err != nil {
-		return &QueryReply{Error: fmt.Sprintf("Querying user info for: %s failed with error: %v", emailAddress, err)}
+		log.Println(fmt.Sprintf("Querying user %s info by mail failed with error: %v", emailAddress, err))
+		return &QueryReply{Error: fmt.Sprintf("Querying user %s info by mail failed with error: %v", emailAddress, err)}
 	}
 
 	usersResponseValue := usersResponse.GetValue()
