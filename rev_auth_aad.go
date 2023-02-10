@@ -408,15 +408,15 @@ func Query(userIdentity string) *QueryReply {
 	log.Printf("Querying user info for: %s by Identity", userIdentity)
 	usersResponse, err := msGraphClient.Users().Get(context.Background(), configuration)
 	if err != nil {
-		log.Println(fmt.Sprintf("Querying user %s info by identity failed with error: %v", userIdentity, err))
-		return &QueryReply{Error: fmt.Sprintf("Querying user %s info by identity failed with error: %v", userIdentity, err)}
+		log.Println(fmt.Sprintf("Querying user %s info failed with error: %v", userIdentity, err))
+		return &QueryReply{Error: fmt.Sprintf("Querying user %s info failed with error: %v", userIdentity, err)}
 	}
 
 	usersResponseValue := usersResponse.GetValue()
 	if len(usersResponseValue) == 0 {
 		log.Printf("User: %s not found", userIdentity)
 		queryReply.NotExist = true
-		queryReply.Error = fmt.Sprintf("Account not exist with email %s!", userIdentity)
+		queryReply.Error = fmt.Sprintf("account %s not exist", userIdentity)
 		return queryReply
 	}
 
@@ -427,7 +427,7 @@ func Query(userIdentity string) *QueryReply {
 	}
 
 	if queryReply.Account == "" || usersResponseValue[0].GetId() == nil {
-		queryReply.Error = fmt.Sprintf("Account not exist with email %s!", userIdentity)
+		queryReply.Error = fmt.Sprintf("account %s not exist", userIdentity)
 		queryReply.NotExist = true
 		return queryReply
 	}
@@ -488,15 +488,15 @@ func QueryMail(emailAddress string) *QueryReply {
 	log.Printf("Querying user info for: %s by Email", emailAddress)
 	usersResponse, err := msGraphClient.Users().Get(context.Background(), configuration)
 	if err != nil {
-		log.Println(fmt.Sprintf("Querying user %s info by mail failed with error: %v", emailAddress, err))
-		return &QueryReply{Error: fmt.Sprintf("Querying user %s info by mail failed with error: %v", emailAddress, err)}
+		log.Println(fmt.Sprintf("Querying user %s info failed with error: %v", emailAddress, err))
+		return &QueryReply{Error: fmt.Sprintf("querying user %s info failed with error: %v", emailAddress, err)}
 	}
 
 	usersResponseValue := usersResponse.GetValue()
 	if len(usersResponseValue) == 0 {
 		log.Printf("User: %s not found", emailAddress)
 		queryReply.NotExist = true
-		queryReply.Error = fmt.Sprintf("Account not exist with email %s!", emailAddress)
+		queryReply.Error = fmt.Sprintf("account %s not exist", emailAddress)
 		return queryReply
 	}
 
@@ -507,7 +507,7 @@ func QueryMail(emailAddress string) *QueryReply {
 	}
 
 	if queryReply.Account == "" || usersResponseValue[0].GetId() == nil {
-		queryReply.Error = fmt.Sprintf("Account not exist with email %s!", emailAddress)
+		queryReply.Error = fmt.Sprintf("account %s not exist", emailAddress)
 		queryReply.NotExist = true
 		return queryReply
 	}
