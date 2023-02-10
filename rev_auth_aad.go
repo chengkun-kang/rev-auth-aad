@@ -191,8 +191,8 @@ func AuthenticatePublicClient(account, password string) *AuthReply {
 	}
 
 	requestParameters := &msgraphsdkme.MeRequestBuilderGetQueryParameters{
-		// "id", "displayName", "givenName", "surname", "jobTitle", "officeLocation", "postalCode", "identities", "mail", "department", "employeeId"
-		Select: []string{"id", "displayName", "givenName", "surname", "mail", "department", "employeeId"},
+		// "id", "displayName", "givenName", "surname", "jobTitle", "officeLocation", "postalCode", "identities", "mail", "department", "employeeId", "onPremisesSamAccountName"
+		Select: []string{"id", "displayName", "givenName", "surname", "mail", "department", "employeeId", "onPremisesSamAccountName"},
 	}
 	configuration := &msgraphsdkme.MeRequestBuilderGetRequestConfiguration{
 		QueryParameters: requestParameters,
@@ -207,8 +207,9 @@ func AuthenticatePublicClient(account, password string) *AuthReply {
 
 	authReply.IsAuthenticated = true
 	if currentUserReponse.GetEmployeeId() != nil {
-		log.Printf("Authenticated user employeeID: %s\n", *currentUserReponse.GetEmployeeId())
 		authReply.Account = *currentUserReponse.GetEmployeeId()
+	} else if currentUserReponse.GetOnPremisesSamAccountName() != nil {
+		authReply.Account = *currentUserReponse.GetOnPremisesSamAccountName()
 	}
 	if currentUserReponse.GetDisplayName() != nil {
 		authReply.Name = *currentUserReponse.GetDisplayName()
@@ -253,8 +254,8 @@ func AuthenticateByClientCredentials(account string) *AuthReply {
 	}
 
 	requestParameters := &msgraphsdkusers.UserItemRequestBuilderGetQueryParameters{
-		// "id", "displayName", "givenName", "surname", "jobTitle", "officeLocation", "postalCode", "identities", "mail", "department", "employeeId"
-		Select: []string{"id", "displayName", "givenName", "surname", "mail", "department", "employeeId"},
+		// "id", "displayName", "givenName", "surname", "jobTitle", "officeLocation", "postalCode", "identities", "mail", "department", "employeeId", "onPremisesSamAccountName"
+		Select: []string{"id", "displayName", "givenName", "surname", "mail", "department", "employeeId", "onPremisesSamAccountName"},
 	}
 	configuration := &msgraphsdkusers.UserItemRequestBuilderGetRequestConfiguration{
 		QueryParameters: requestParameters,
@@ -269,8 +270,9 @@ func AuthenticateByClientCredentials(account string) *AuthReply {
 
 	authReply.IsAuthenticated = true
 	if currentUserReponse.GetEmployeeId() != nil {
-		log.Printf("Authenticated user employeeID: %s\n", *currentUserReponse.GetEmployeeId())
 		authReply.Account = *currentUserReponse.GetEmployeeId()
+	} else if currentUserReponse.GetOnPremisesSamAccountName() != nil {
+		authReply.Account = *currentUserReponse.GetOnPremisesSamAccountName()
 	}
 	if currentUserReponse.GetDisplayName() != nil {
 		authReply.Name = *currentUserReponse.GetDisplayName()
@@ -374,6 +376,7 @@ func AcquireCredentialToken() (string, error) {
 	return result.AccessToken, nil
 }
 
+// https://learn.microsoft.com/en-us/graph/query-parameters?context=graph%2Fapi%2F1.0&view=graph-rest-1.0
 func Query(userIdentity string) *QueryReply {
 	if userIdentity == "" || strings.TrimSpace(userIdentity) == "" {
 		return &QueryReply{Error: fmt.Sprintf("Invalid user identity input, please provide a valid user identity.")}
@@ -385,12 +388,13 @@ func Query(userIdentity string) *QueryReply {
 	}
 
 	requestCount := true
-	requestFilter := fmt.Sprintf("employeeId eq '%s'", userIdentity)
+	// requestFilter := fmt.Sprintf("employeeId eq '%s'", userIdentity)
+	requestFilter := fmt.Sprintf("onPremisesSamAccountName eq '%s' or employeeId eq '%s'", userIdentity, userIdentity)
 	requestParameters := &msgraphsdkusers.UsersRequestBuilderGetQueryParameters{
 		Count:  &requestCount,
 		Filter: &requestFilter,
-		// "id", "displayName", "givenName", "surname", "jobTitle", "officeLocation", "postalCode", "identities", "mail", "department", "employeeId"
-		Select: []string{"id", "displayName", "givenName", "surname", "mail", "department", "employeeId"},
+		// "id", "displayName", "givenName", "surname", "jobTitle", "officeLocation", "postalCode", "identities", "mail", "department", "employeeId", "onPremisesSamAccountName"
+		Select: []string{"id", "displayName", "givenName", "surname", "mail", "department", "employeeId", "onPremisesSamAccountName"},
 	}
 	configuration := &msgraphsdkusers.UsersRequestBuilderGetRequestConfiguration{
 		QueryParameters: requestParameters,
@@ -413,6 +417,8 @@ func Query(userIdentity string) *QueryReply {
 
 	if usersResponseValue[0].GetEmployeeId() != nil {
 		queryReply.Account = *usersResponseValue[0].GetEmployeeId()
+	} else if usersResponseValue[0].GetOnPremisesSamAccountName() != nil {
+		queryReply.Account = *usersResponseValue[0].GetOnPremisesSamAccountName()
 	}
 
 	if queryReply.Account == "" || usersResponseValue[0].GetId() == nil {
@@ -449,6 +455,7 @@ func Query(userIdentity string) *QueryReply {
 	return queryReply
 }
 
+// https://learn.microsoft.com/en-us/graph/query-parameters?context=graph%2Fapi%2F1.0&view=graph-rest-1.0
 func QueryMail(emailAddress string) *QueryReply {
 	isMail := utils.MAIL_REGEX.MatchString(emailAddress)
 	// construct the username to principal username
@@ -466,8 +473,8 @@ func QueryMail(emailAddress string) *QueryReply {
 	requestParameters := &msgraphsdkusers.UsersRequestBuilderGetQueryParameters{
 		Count:  &requestCount,
 		Filter: &requestFilter,
-		// "id", "displayName", "givenName", "surname", "jobTitle", "officeLocation", "postalCode", "identities", "mail", "department", "employeeId"
-		Select: []string{"id", "displayName", "givenName", "surname", "mail", "department", "employeeId"},
+		// "id", "displayName", "givenName", "surname", "jobTitle", "officeLocation", "postalCode", "identities", "mail", "department", "employeeId", "onPremisesSamAccountName"
+		Select: []string{"id", "displayName", "givenName", "surname", "mail", "department", "employeeId", "onPremisesSamAccountName"},
 	}
 	configuration := &msgraphsdkusers.UsersRequestBuilderGetRequestConfiguration{
 		QueryParameters: requestParameters,
@@ -490,6 +497,8 @@ func QueryMail(emailAddress string) *QueryReply {
 
 	if usersResponseValue[0].GetEmployeeId() != nil {
 		queryReply.Account = *usersResponseValue[0].GetEmployeeId()
+	} else if usersResponseValue[0].GetOnPremisesSamAccountName() != nil {
+		queryReply.Account = *usersResponseValue[0].GetOnPremisesSamAccountName()
 	}
 
 	if queryReply.Account == "" || usersResponseValue[0].GetId() == nil {
