@@ -20,6 +20,7 @@ import (
 	azauthlibgocred "github.com/AzureAD/microsoft-authentication-library-for-go/apps/confidential"
 	azauthlibgopublic "github.com/AzureAD/microsoft-authentication-library-for-go/apps/public"
 	httpclient "github.com/chengkun-kang/rev-auth-aad/lib/http-client"
+	kiotaabstractions "github.com/microsoft/kiota-abstractions-go"
 	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
 	msgraphsdkme "github.com/microsoftgraph/msgraph-sdk-go/me"
 	msgraphsdkusers "github.com/microsoftgraph/msgraph-sdk-go/users"
@@ -66,8 +67,8 @@ type QueryReply struct {
 	Avatar   string
 }
 
-// InitAAD reading AAD configuration
-func InitAAD() {
+// Init reading AAD configuration
+func Init() {
 	var found bool
 	if AzureADTenantId, found = revel.Config.String("aad.tenant.id"); !found {
 		panic("aad.tenant.id not defined in revel app.conf file")
@@ -387,6 +388,7 @@ func Query(userIdentity string) *QueryReply {
 		return &QueryReply{Error: fmt.Sprintf("Init Graph Service client failed with error: %v", err)}
 	}
 
+	// https://learn.microsoft.com/en-us/graph/aad-advanced-queries?tabs=http should add ConsistencyLevel: eventual and $count=true
 	requestCount := true
 	// requestFilter := fmt.Sprintf("employeeId eq '%s'", userIdentity)
 	requestFilter := fmt.Sprintf("onPremisesSamAccountName eq '%s' or employeeId eq '%s'", userIdentity, userIdentity)
@@ -396,7 +398,10 @@ func Query(userIdentity string) *QueryReply {
 		// "id", "displayName", "givenName", "surname", "jobTitle", "officeLocation", "postalCode", "identities", "mail", "department", "employeeId", "onPremisesSamAccountName"
 		Select: []string{"id", "displayName", "givenName", "surname", "mail", "department", "employeeId", "onPremisesSamAccountName"},
 	}
+	requestHeaders := kiotaabstractions.NewRequestHeaders()
+	requestHeaders.Add("ConsistencyLevel", "eventual")
 	configuration := &msgraphsdkusers.UsersRequestBuilderGetRequestConfiguration{
+		Headers:         requestHeaders,
 		QueryParameters: requestParameters,
 	}
 
