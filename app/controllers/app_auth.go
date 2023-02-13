@@ -35,6 +35,7 @@ type UserProfile struct {
 }
 
 func SetAzureADViewArgs(c *revel.Controller) revel.Result {
+	log.Println("Setting azure AD info to view args......")
 	c.ViewArgs["AzureADAppClientId"] = revauthaad.AzureADAppClientId
 	c.ViewArgs["AzureADGraphApiMePath"] = revauthaad.AzureADGraphApiMePath
 	c.ViewArgs["AzureADAppRedirectUri"] = revauthaad.AzureADAppRedirectUri
