@@ -45,6 +45,8 @@ var (
 
 	AzureADAppRedirectUri           = "/"
 	AzureADAppPostLogoutRedirectUri = "http://localhost:3000/login"
+
+	AppRedirectHtmlFilePath = "/public/lib/msal/redirect.html"
 )
 
 type AuthReply struct {
@@ -91,6 +93,10 @@ func Init() {
 	if tempLogoutRedirectUrl, found := revel.Config.String("aad.app.logout.redirect.url"); found &&
 		tempLogoutRedirectUrl != "" && strings.TrimSpace(tempLogoutRedirectUrl) != "" {
 		AzureADAppPostLogoutRedirectUri = tempLogoutRedirectUrl
+	}
+	if appRedirectHtmlFilePath, found := revel.Config.String("app.redirect.html.file.path"); found &&
+		appRedirectHtmlFilePath != "" && strings.TrimSpace(appRedirectHtmlFilePath) != "" {
+		AppRedirectHtmlFilePath = appRedirectHtmlFilePath
 	}
 	if accountDomain, found := revel.Config.String("aad.account.primary.domain"); found &&
 		accountDomain != "" && strings.TrimSpace(accountDomain) != "" {

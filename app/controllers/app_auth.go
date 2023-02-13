@@ -129,3 +129,9 @@ func (c *AppAuth) Logout() revel.Result {
 	c.Flash.Success("You have logged out.")
 	return c.Redirect(logoutUri)
 }
+
+// Redirect
+func (c *AppAuth) AuthRedirect() revel.Result {
+	fileName := revel.BasePath + revauthaad.AppRedirectHtmlFilePath
+	return c.RenderFileName(fileName, revel.Inline)
+}
