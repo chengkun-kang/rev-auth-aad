@@ -1,3 +1,6 @@
-GET  /logout Auth.Logout
-POST /logout Auth.Logout
-POST /login  Auth.Authenticate
+GET                   /logout                                                         Auth.Logout
+POST                  /logout                                                         Auth.Logout
+POST                  /login                                                          Auth.Authenticate
+
+POST                  /login/v2/:identity                                            AppAuth.Authenticate
+GET                   /logout/v2                                                     AppAuth.Logout
