@@ -16,7 +16,8 @@ type Auth struct {
 	mgodo.MgoController
 }
 
-// Authenticate with AAD
+// Authenticate with AAD, act as a daemon API.
+// For Daemon refer: https://learn.microsoft.com/en-us/azure/active-directory/develop/scenario-daemon-overview
 func (c *Auth) Authenticate(account, password string) revel.Result {
 	//get nextUrl
 	nextUrl := c.Params.Get("nextUrl")
@@ -84,21 +85,26 @@ func (c *Auth) Authenticate(account, password string) revel.Result {
 
 // Logout
 func (c *Auth) Logout() revel.Result {
+	if revauthaad.AzureADTenantAuthority == "" || strings.TrimSpace(revauthaad.AzureADTenantAuthority) == "" {
+		c.Flash.Error("No Azure AD tenant authority found, please contact with system administrator.")
+		return c.Redirect(c.Request.Referer())
+	}
+	if revauthaad.AzureADAppPostLogoutRedirectUri == "" || strings.TrimSpace(revauthaad.AzureADAppPostLogoutRedirectUri) == "" {
+		c.Flash.Error("No application logout redirect url found, please contact with system administrator.")
+		return c.Redirect(c.Request.Referer())
+	}
+
 	//delete cache which is logged in user info
 	cache.Delete(c.Session.ID())
 	c.Session = make(map[string]interface{})
+
 	/**
 	 * Construct a logout URI and redirect the user to end the
 	 * session with Azure AD. For more information, visit:
 	 * https://docs.microsoft.com/azure/active-directory/develop/v2-protocols-oidc#send-a-sign-out-request
 	 */
-	if revauthaad.AzureADTenantAuthority == "" || strings.TrimSpace(revauthaad.AzureADTenantAuthority) == "" {
-		c.Flash.Error("No Azure AD tenant authority found, please contact with system administrator.")
-	}
-	if revauthaad.AppLogoutRedirectUrl == "" || strings.TrimSpace(revauthaad.AppLogoutRedirectUrl) == "" {
-		c.Flash.Error("No application logout redirect url found, please contact with system administrator.")
-	}
-	logoutUri := fmt.Sprintf("%s/oauth2/v2.0/logout?post_logout_redirect_uri=%s", revauthaad.AzureADTenantAuthority, revauthaad.AppLogoutRedirectUrl)
+	logoutUri := fmt.Sprintf("%s/oauth2/v2.0/logout?post_logout_redirect_uri=%s", revauthaad.AzureADTenantAuthority, revauthaad.AzureADAppPostLogoutRedirectUri)
+
 	c.Flash.Success("You have logged out.")
 	return c.Redirect(logoutUri)
 }

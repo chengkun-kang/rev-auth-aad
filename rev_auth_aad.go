@@ -36,11 +36,15 @@ var (
 	AzureADTenantAuthority      = ""
 	AzureADAccountPrimaryDomain = ""
 	AzureADCloudInstance        = "https://login.microsoftonline.com"
-	AzureADApiUsersPath         = "https://graph.microsoft.com/v1.0/users"
-	AzureADApiPublicScopes      = []string{"User.Read"}
-	AzureADApiCredentialScopes  = []string{"https://graph.microsoft.com/.default"}
 
-	AppLogoutRedirectUrl = "/login"
+	AzureADGraphApiMePath    = "https://graph.microsoft.com/v1.0/me"
+	AzureADGraphApiUsersPath = "https://graph.microsoft.com/v1.0/users"
+
+	AzureADApiPublicScopes     = []string{"User.Read"}
+	AzureADApiCredentialScopes = []string{"https://graph.microsoft.com/.default"}
+
+	AzureADAppRedirectUri           = "/"
+	AzureADAppPostLogoutRedirectUri = "http://localhost:3000/login"
 )
 
 type AuthReply struct {
@@ -82,7 +86,11 @@ func Init() {
 	AzureADTenantAuthority = fmt.Sprintf("%s/%s", utils.TrimSuffix(AzureADCloudInstance, "/"), AzureADTenantId)
 	if tempLogoutRedirectUrl, found := revel.Config.String("app.logout.redirect.url"); found &&
 		tempLogoutRedirectUrl != "" && strings.TrimSpace(tempLogoutRedirectUrl) != "" {
-		AppLogoutRedirectUrl = tempLogoutRedirectUrl
+		AzureADAppPostLogoutRedirectUri = tempLogoutRedirectUrl
+	}
+	if tempRedirectUrl, found := revel.Config.String("app.logout.redirect.url"); found &&
+		tempRedirectUrl != "" && strings.TrimSpace(tempRedirectUrl) != "" {
+		AzureADAppRedirectUri = tempRedirectUrl
 	}
 	if accountDomain, found := revel.Config.String("aad.account.primary.domain"); found &&
 		accountDomain != "" && strings.TrimSpace(accountDomain) != "" {
@@ -90,7 +98,11 @@ func Init() {
 	}
 	if tempAADApiUsersPath, found := revel.Config.String("aad.api.users.path"); found &&
 		tempAADApiUsersPath != "" && strings.TrimSpace(tempAADApiUsersPath) != "" {
-		AzureADApiUsersPath = tempAADApiUsersPath
+		AzureADGraphApiUsersPath = tempAADApiUsersPath
+	}
+	if tempAADApiMePath, found := revel.Config.String("aad.api.users.path"); found &&
+		tempAADApiMePath != "" && strings.TrimSpace(tempAADApiMePath) != "" {
+		AzureADGraphApiMePath = tempAADApiMePath
 	}
 	if AzureADAppClientId, found = revel.Config.String("aad.app.client.id"); !found {
 		panic("aad.app.client.id not defined in revel app.conf file")
@@ -592,7 +604,7 @@ func QueryUserPhotoById(userId, token string) string {
 	headers := map[string]string{
 		"Authorization": fmt.Sprintf("Bearer %s", token),
 	}
-	queryUrl := utils.TrimSuffix(AzureADApiUsersPath, "/") + fmt.Sprintf("/%s/photo/$value", userId)
+	queryUrl := utils.TrimSuffix(AzureADGraphApiUsersPath, "/") + fmt.Sprintf("/%s/photo/$value", userId)
 	data, err := httpclient.GetJson(queryUrl, "", headers)
 	if err != nil {
 		log.Printf("Query user photo failed with error: %v", err)
@@ -617,7 +629,7 @@ func QueryUserPhotoByName(username, token string) string {
 	headers := map[string]string{
 		"Authorization": fmt.Sprintf("Bearer %s", token),
 	}
-	queryUrl := utils.TrimSuffix(AzureADApiUsersPath, "/") + fmt.Sprintf("/%s/photo/$value", username)
+	queryUrl := utils.TrimSuffix(AzureADGraphApiUsersPath, "/") + fmt.Sprintf("/%s/photo/$value", username)
 	data, err := httpclient.GetJson(queryUrl, "", headers)
 	if err != nil {
 		log.Printf("Query user photo failed with error: %v", err)
