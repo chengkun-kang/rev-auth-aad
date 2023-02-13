@@ -22,10 +22,12 @@ aad.app.client.id=xxxxxxxx-xxxxxxxx-xxxxxxxx-xxxxxxx
 aad.app.client.secret=xxxxxxxx-xxxxxxxx-xxxxxxxx-xxxxxxx
 aad.account.primary.domain=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 aad.cloud.instance=xxxxxxxx-xxxxxxxx-xxxxxxxx-xxxxxxx          # default: https://login.microsoftonline.com
-aad.api.users.path=xxxxxxxx-xxxxxxxx-xxxxxxxx-xxxxxxx          # default: https://graph.microsoft.com/v1.0/users/
+aad.graph.api.me.path=xxxxxxxx-xxxxxxxx-xxxxxxxx-xxxxxxx       # default: https://graph.microsoft.com/v1.0/me
+aad.graph.api.users.path=xxxxxxxx-xxxxxxxx-xxxxxxxx-xxxxxxx    # default: https://graph.microsoft.com/v1.0/users
 aad.api.public.scopes=xxxxxxxx-xxxxxxxx-xxxxxxxx-xxxxxxx       # default: User.Read
 aad.api.credential.scopes=xxxxxxxx-xxxxxxxx-xxxxxxxx-xxxxxxx   # default: https://graph.microsoft.com/.default
-app.logout.redirect.url=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx         # default: /login
+aad.app.redirect.url=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx      # default: '/'
+aad.app.logout.redirect.url=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     # default: /login
 ```
 
 The Azure AD Cloud Instance options include;

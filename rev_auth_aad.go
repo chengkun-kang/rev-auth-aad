@@ -84,23 +84,23 @@ func Init() {
 		AzureADCloudInstance = tempCloudInstance
 	}
 	AzureADTenantAuthority = fmt.Sprintf("%s/%s", utils.TrimSuffix(AzureADCloudInstance, "/"), AzureADTenantId)
-	if tempLogoutRedirectUrl, found := revel.Config.String("app.logout.redirect.url"); found &&
-		tempLogoutRedirectUrl != "" && strings.TrimSpace(tempLogoutRedirectUrl) != "" {
-		AzureADAppPostLogoutRedirectUri = tempLogoutRedirectUrl
-	}
-	if tempRedirectUrl, found := revel.Config.String("app.logout.redirect.url"); found &&
+	if tempRedirectUrl, found := revel.Config.String("aad.app.redirect.url"); found &&
 		tempRedirectUrl != "" && strings.TrimSpace(tempRedirectUrl) != "" {
 		AzureADAppRedirectUri = tempRedirectUrl
+	}
+	if tempLogoutRedirectUrl, found := revel.Config.String("aad.app.logout.redirect.url"); found &&
+		tempLogoutRedirectUrl != "" && strings.TrimSpace(tempLogoutRedirectUrl) != "" {
+		AzureADAppPostLogoutRedirectUri = tempLogoutRedirectUrl
 	}
 	if accountDomain, found := revel.Config.String("aad.account.primary.domain"); found &&
 		accountDomain != "" && strings.TrimSpace(accountDomain) != "" {
 		AzureADAccountPrimaryDomain = accountDomain
 	}
-	if tempAADApiUsersPath, found := revel.Config.String("aad.api.users.path"); found &&
+	if tempAADApiUsersPath, found := revel.Config.String("aad.graph.api.users.path"); found &&
 		tempAADApiUsersPath != "" && strings.TrimSpace(tempAADApiUsersPath) != "" {
 		AzureADGraphApiUsersPath = tempAADApiUsersPath
 	}
-	if tempAADApiMePath, found := revel.Config.String("aad.api.users.path"); found &&
+	if tempAADApiMePath, found := revel.Config.String("aad.graph.api.me.path"); found &&
 		tempAADApiMePath != "" && strings.TrimSpace(tempAADApiMePath) != "" {
 		AzureADGraphApiMePath = tempAADApiMePath
 	}
